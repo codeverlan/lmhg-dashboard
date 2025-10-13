@@ -1,0 +1,92 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: lmhg
+      POSTGRES_PASSWORD: lmhg
+      POSTGRES_DB: lmhg_dev
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app:delegated
+    environment:
+      DATABASE_URL: postgresql+psycopg://lmhg:lmhg@db:5432/lmhg_dev
+      SECRET_KEY: super-secret
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  kratos:
+    image: oryd/kratos:latest
+    environment:
+      - DSN=postgres://lmhg:lmhg@db:5432/lmhg_dev?sslmode=disable
+    ports:
+      - "4433:4433" # public kratos
+    depends_on:
+      - db
+    volumes:
+      - ./kratos:/etc/kratos:ro
+
+  hydra:
+    image: oryd/hydra:latest
+    environment:
+      - SYSTEM_SECRET=replace-with-super-secret
+      - DATABASE_URL=postgres://lmhg:lmhg@db:5432/lmhg_dev?sslmode=disable
+    ports:
+      - "4444:4444" # hydra admin
+      - "4445:4445" # hydra public
+    depends_on:
+      - db
+    volumes:
+      - ./hydra:/etc/hydra:ro
+
+  nginx:
+    image: nginx:stable-alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - "443:443"
+    depends_on:
+      - frontend
+      - backend
+      - hydra
+      - kratos
+
+  migrate:
+    build:
+      context: ./backend
+    command: ["/bin/sh", "-c", "./manage_migrations.sh"]
+    volumes:
+      - ./backend:/app:delegated
+    environment:
+      - DATABASE_URL=postgresql+psycopg://lmhg:lmhg@db:5432/lmhg_dev
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app:delegated
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:

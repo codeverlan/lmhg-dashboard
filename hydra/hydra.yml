@@ -1,0 +1,7 @@
+dsn: postgres://lmhg:lmhg@db:5432/lmhg_dev?sslmode=disable
+urls:
+  self: http://hydra:4445/
+  login: http://nginx/oauth2/auth
+  consent: http://nginx/oauth2/auth
+secrets:
+  system: replace-with-super-secret
