@@ -9,6 +9,6 @@ if [ -z "$DATABASE_URL" ]; then
 fi
 
 # ensure alembic is available
-alembic -c alembic.ini upgrade head
+python run_migrations.py
 
 echo "Migrations applied"
