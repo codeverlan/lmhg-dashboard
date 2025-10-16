@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 import os
+import sys
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
@@ -8,11 +9,22 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-fileConfig(config.config_file_name)
+# Interpret the config file for Python logging. If the alembic.ini
+# doesn't contain logger sections (common in minimal dev configs),
+# fall back to a basic logging configuration.
+try:
+    fileConfig(config.config_file_name)
+except Exception:
+    import logging
+    logging.basicConfig(level=logging.INFO)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
+# Ensure project root is on sys.path so we can import backend package
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from lmhg.models import SQLModel
 
 target_metadata = SQLModel.metadata

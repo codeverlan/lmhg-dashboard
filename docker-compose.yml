@@ -22,8 +22,8 @@ services:
     volumes:
       - ./backend:/app:delegated
     environment:
-      DATABASE_URL: postgresql+psycopg://lmhg:lmhg@db:5432/lmhg_dev
-      SECRET_KEY: super-secret
+      - DATABASE_URL=postgresql+psycopg2://lmhg:lmhg@db:5432/lmhg_dev
+      - SECRET_KEY=super-secret
     ports:
       - "8000:8000"
     depends_on:
@@ -45,7 +45,9 @@ services:
     image: oryd/hydra:latest
     environment:
       - SYSTEM_SECRET=replace-with-super-secret
+      - SECRETS_SYSTEM=replace-with-super-secret
       - DATABASE_URL=postgres://lmhg:lmhg@db:5432/lmhg_dev?sslmode=disable
+      - DSN=postgres://lmhg:lmhg@db:5432/lmhg_dev?sslmode=disable
     ports:
       - "4444:4444" # hydra admin
       - "4445:4445" # hydra public
@@ -74,7 +76,7 @@ services:
     volumes:
       - ./backend:/app:delegated
     environment:
-      - DATABASE_URL=postgresql+psycopg://lmhg:lmhg@db:5432/lmhg_dev
+      - DATABASE_URL=postgresql+psycopg2://lmhg:lmhg@db:5432/lmhg_dev
     depends_on:
       - db
 
@@ -83,6 +85,15 @@ services:
       context: ./frontend
     volumes:
       - ./frontend:/app:delegated
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  frontend-prod:
+    image: ${FRONTEND_IMAGE:-ghcr.io/${GITHUB_REPOSITORY:-codeverlan/lmhg-dashboard}/lmhg-frontend:prod}
+    profiles:
+      - production
     ports:
       - "3000:3000"
     depends_on:

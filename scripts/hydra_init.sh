@@ -14,7 +14,7 @@ until curl -s $HYDRA_ADMIN_URL/health/ready | grep 'ok' >/dev/null 2>&1; do
 done
 
 echo "Registering client $CLIENT_ID"
-cat <<EOF | curl -s -X POST $HYDRA_ADMIN_URL/clients -H 'Content-Type: application/json' -d @-
+cat <<EOF | curl -s -w "\nHTTP_CODE:%{http_code}\n" -X POST $HYDRA_ADMIN_URL/admin/clients -H 'Content-Type: application/json' -d @-
 {
   "client_id": "$CLIENT_ID",
   "grant_types": ["authorization_code","refresh_token","client_credentials"],
@@ -26,6 +26,8 @@ cat <<EOF | curl -s -X POST $HYDRA_ADMIN_URL/clients -H 'Content-Type: applicati
 }
 EOF
 
-echo "Client registered (or already existed)"
+# verify by fetching client
+echo "Checking client registration..."
+curl -s -w "\nHTTP_CODE:%{http_code}\n" $HYDRA_ADMIN_URL/admin/clients/$CLIENT_ID
 
-*** End Patch
+echo "Done"
